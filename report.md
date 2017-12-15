@@ -2,15 +2,15 @@
 
 ### Program Execution
 
-* #### Execution
+* Execution
 
   Use python3 to execute `sender.py`, `agent.py`, and `receiver.py`.
   Configure the settings by modifying the following files. Setting files must be put under the same directory with the programs(multiple copies needed if they run on different machines).
 
 
-* #### Settings
+* Settings
 
-  * ##### SENDER.conf
+  * SENDER.conf
 
     ```
     [sender's IP]
@@ -19,7 +19,7 @@
     [timeout] (float in second)
     ```
 
-  * ##### AGENT.conf
+  * AGENT.conf
 
     ```
     [agent's IP]
@@ -28,7 +28,7 @@
     [loss rate] (in float)
     ```
 
-  * ##### RECEIVER.conf
+  * RECEIVER.conf
 
     ```
     [receiver's IP]
@@ -38,7 +38,7 @@
 
 ### Program Structure
 
-* #### Sender
+* Sender
 
   ```mermaid
   graph LR
@@ -53,7 +53,7 @@
   T-->B
   ```
 
-* #### Agent
+* Agent
 
   ```mermaid
   graph LR
@@ -63,13 +63,13 @@
   B-->|else|D(fwd to receiver)
   C-->A
   D-->A
+  A-->|recv FIN|D(fwd to receiver)
+  F-->A
   A-->|recv ACK or FINACK|E(fwd to sender)
   E-->A
-  A-->|recv FIN|F(fwd to receiver)
-  F-->A
   ```
 
-* #### Receiver
+* Receiver
 
   ```mermaid
   graph LR
@@ -78,19 +78,20 @@
   E-->End
   A-->|recv data|F{pkt.seq = seq?}
   F-->|yes|B{buffer full?}
-  F-->|no|C
-  B-->|yes|C(drop packet)
-  C-->A
+  F-->|no|C(drop packet)
+  B-->|yes|G(flush)
+  G-->C
   B-->|no|D("pkt to buffer<br>send ack(seq)<br>seq++")
   D-->A
+  C-->A
   ```
 
 
 ### Difficulties & Solutions
 
-* #### Python versions :
+* Python versions :
 
   I spent a lot of time debugging sequence number until I found out that `bytes()` in python 2 is just an alias of `str()`.
-* #### Non-blocking socket :
+* Non-blocking socket :
 
   If I directly set socket as non-blocking, it will raise an error when `recvfrom()` has nothing coming in.I first use `try` and `except` to handle the raised error, and it didn't turn out to be a good method. Later on, I switched back to use blocking IO and `select.select()` to see if there is packet available to be received.
