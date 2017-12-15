@@ -36,18 +36,19 @@ buffer = []
 
 while True:
     data, address = LISTEN_SOCK.recvfrom(1024)
-    if data == "FIN":
+    if data == bytes("FIN", "ascii"):
         print("recv\tfin")
-        SEND_SOCK.sendto("FINACK", AGENT_ADDRESS)
+        SEND_SOCK.sendto(bytes("FINACK", "ascii"), AGENT_ADDRESS)
         print("send\tfinack")
         print("flush")
         for d in buffer:
             F.write(d[4:])
         buffer = []
+        break
     elif bytes_to_int(data[0:4]) == seq:
-        if len(buffer) >= 5: # buffer overflow
+        if len(buffer) >= 32: # buffer overflow
             print("drop\tdata\t", bytes_to_int(data[0:4]))
-            ACK = "ACK" + str(last_seq)
+            ACK = bytes("ACK", "ascii") + bytes(str(last_seq), "ascii")
             SEND_SOCK.sendto(ACK, AGENT_ADDRESS)
             print("send\tack\t", last_seq)
             print("flush")
@@ -57,13 +58,13 @@ while True:
             continue
         print("recv\tdata\t", seq)
         buffer.append(data)
-        ACK = "ACK" + str(seq)
+        ACK = bytes("ACK", "ascii") + bytes(str(seq), "ascii")
         SEND_SOCK.sendto(ACK, AGENT_ADDRESS)
         print("send\tack\t", seq)
         last_seq = seq
         seq += 1
     else:
         print("drop\tdata\t", bytes_to_int(data[0:4]))
-        ACK = "ACK" + str(last_seq)
+        ACK = bytes("ACK", "ascii") + bytes(str(last_seq), "ascii")
         SEND_SOCK.sendto(ACK, AGENT_ADDRESS)
         print("send\tack\t", last_seq)
